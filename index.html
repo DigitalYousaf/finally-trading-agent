@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f172a'/%3E%3Cpath d='M8 22 L14 14 L18 18 L24 8' stroke='%2322d3ee' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M18 8 h6 v6' stroke='%2322d3ee' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FiNALLY — AI Agent for Trading</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">◈</span>
+    <div>
+      <h1>FiNALLY</h1>
+      <p>AI Agent for Trading · paper-trading simulator</p>
+    </div>
+  </div>
+  <div class="ticker">
+    <div class="tick"><label>Equity</label><span id="hdrEquity">—</span></div>
+    <div class="tick"><label>P&amp;L</label><span id="hdrPnl">—</span></div>
+    <div class="tick"><label>Cash</label><span id="hdrCash">—</span></div>
+  </div>
+</header>
+
+<div class="disclaimer">
+  ⚠ Simulated market data for education only — not financial advice. No real money is used or traded.
+</div>
+
+<nav class="tabs" role="tablist" aria-label="Main sections">
+  <button class="tabbtn active" data-tab="dashboard" role="tab">Dashboard</button>
+  <button class="tabbtn" data-tab="markets" role="tab">Markets</button>
+  <button class="tabbtn" data-tab="agent" role="tab">AI Agent</button>
+  <button class="tabbtn" data-tab="backtest" role="tab">Backtest</button>
+</nav>
+
+<main>
+  <!-- ============ DASHBOARD ============ -->
+  <section id="tab-dashboard" class="tabpane active" role="tabpanel">
+    <div class="cards">
+      <div class="card"><label>Cash</label><strong id="statCash">—</strong></div>
+      <div class="card"><label>Invested</label><strong id="statInvested">—</strong></div>
+      <div class="card"><label>Total equity</label><strong id="statEquity">—</strong></div>
+      <div class="card"><label>Total P&amp;L</label><strong id="statPnl">—</strong></div>
+      <div class="card"><label>P&amp;L %</label><strong id="statPnlPct">—</strong></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Equity curve</h2>
+        <button id="btnReset" class="btn danger">Reset to $100,000</button>
+      </div>
+      <canvas id="equityChart" class="chart"></canvas>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Open positions</h2></div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Asset</th><th>Qty</th><th>Avg entry</th><th>Price</th><th>Value</th><th>Unrealized P&amp;L</th></tr></thead>
+          <tbody id="positionsBody"><tr><td colspan="6" class="empty">No open positions yet — buy something on the Markets tab.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Trade history</h2></div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Time</th><th>Asset</th><th>Side</th><th>Qty</th><th>Price</th><th>Value</th><th>By</th></tr></thead>
+          <tbody id="historyBody"><tr><td colspan="7" class="empty">No trades yet.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MARKETS ============ -->
+  <section id="tab-markets" class="tabpane" role="tabpanel">
+    <div class="markets-grid">
+      <div class="panel">
+        <div class="panel-head"><h2>Watchlist</h2></div>
+        <div id="watchlist" class="watchlist"></div>
+      </div>
+
+      <div class="panel chartpanel">
+        <div class="panel-head">
+          <div>
+            <h2 id="chartTitle">—</h2>
+            <div id="chartMeta" class="chartmeta">—</div>
+          </div>
+        </div>
+        <canvas id="priceChart" class="chart tall"></canvas>
+        <div class="legend">
+          <span><i class="sw up"></i>Up candle</span>
+          <span><i class="sw down"></i>Down candle</span>
+          <span><i class="sw sma20"></i>SMA 20</span>
+          <span><i class="sw sma50"></i>SMA 50</span>
+          <span class="legend-note">Hover the chart for OHLC · 1-minute candles</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Trade</h2></div>
+        <div class="orderbox">
+          <div class="order-row"><span>Price</span><strong id="orderPrice">—</strong></div>
+          <div class="order-row"><span>Your position</span><strong id="orderPos">—</strong></div>
+          <label class="qtylabel">Quantity
+            <input id="qtyInput" type="number" min="0" step="any" value="1">
+          </label>
+          <div class="order-row"><span>Est. value</span><strong id="orderEst">—</strong></div>
+          <div class="btnrow">
+            <button id="btnBuy" class="btn buy">Buy</button>
+            <button id="btnSell" class="btn sell">Sell</button>
+          </div>
+          <p class="hint">Paper trading with $100,000 virtual cash. Nothing here is real.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AI AGENT ============ -->
+  <section id="tab-agent" class="tabpane" role="tabpanel">
+    <div class="panel agent-controls">
+      <label class="switch" title="Let the agent trade by itself">
+        <input type="checkbox" id="autoTradeToggle">
+        <span class="slider"></span>
+      </label>
+      <div class="agent-toggle-text">
+        <strong>Auto-trade</strong>
+        <p id="autoTradeStatus">OFF — the agent watches the market and reports, but never trades.</p>
+      </div>
+      <button id="btnAsk" class="btn primary">Ask agent about <span id="askSymbol">BTC</span></button>
+    </div>
+
+    <div class="cards">
+      <div class="card"><label>Signals generated</label><strong id="agentSignals">0</strong></div>
+      <div class="card"><label>Agent trades</label><strong id="agentTrades">0</strong></div>
+      <div class="card"><label>Win rate (closed)</label><strong id="agentWinRate">—</strong></div>
+      <div class="card"><label>Agent-attributed P&amp;L</label><strong id="agentPnl">$0.00</strong></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Agent activity <span class="live"><i></i>live</span></h2></div>
+      <div id="agentFeed" class="feed" aria-live="polite"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>How the agent thinks</h2></div>
+      <div class="explain">
+        <p>Every 15 seconds the agent scans all six assets and lets three indicators vote:</p>
+        <ol>
+          <li><strong>Trend — SMA(20) vs SMA(50).</strong> When the fast average is above the slow one the trend is up (+1 vote); a fresh crossover adds extra weight.</li>
+          <li><strong>RSI(14).</strong> Below 30 = oversold (buy vote); above 70 = overbought (sell vote); in between it leans gently with the reading.</li>
+          <li><strong>Momentum.</strong> Price change over the last 5 candles: above +1% is a buy vote, below −1% a sell vote.</li>
+        </ol>
+        <p>Votes are summed into a score. A score of <strong>+1.5 or more → BUY</strong>, <strong>−1.5 or less → SELL</strong>, otherwise <strong>HOLD</strong>.
+        Confidence is 55–95%, growing with the strength of the score. When auto-trade is on, the agent risks 10% of equity per trade,
+        holds at most 3 positions per asset, and every agent trade carries a 2% stop-loss and a 4% take-profit, checked on every price tick.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BACKTEST ============ -->
+  <section id="tab-backtest" class="tabpane" role="tabpanel">
+    <div class="panel">
+      <div class="panel-head"><h2>30-day backtest</h2></div>
+      <p class="explain">Generates 30 days of hourly candles for every asset with the same market engine, then runs the
+        <strong>identical</strong> agent strategy over that history — same votes, same 10% position sizing, same 2% stop-loss / 4% take-profit.
+        This shows how the strategy <em>would have</em> performed. Past simulated performance is not a promise of anything.</p>
+      <button id="btnBacktest" class="btn primary">Run 30-day backtest</button>
+
+      <div id="backtestResults" class="hidden">
+        <div class="cards">
+          <div class="card"><label>Total return</label><strong id="btReturn">—</strong></div>
+          <div class="card"><label>Win rate</label><strong id="btWinRate">—</strong></div>
+          <div class="card"><label>Trades</label><strong id="btTrades">—</strong></div>
+          <div class="card"><label>Max drawdown</label><strong id="btDD">—</strong></div>
+        </div>
+        <h3>Backtest equity curve</h3>
+        <canvas id="btChart" class="chart"></canvas>
+        <h3>Per-asset breakdown</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Asset</th><th>Trades</th><th>Wins</th><th>Win rate</th><th>P&amp;L</th></tr></thead>
+            <tbody id="btBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p><strong>FiNALLY</strong> — capstone project · Muhammad Yousaf · SMIT Vibe Engineering with AI Agents, Batch 1</p>
+  <p class="muted">Simulated data for education only — not financial advice. No real money.</p>
+</footer>
+
+<div id="toast" class="toast" role="status"></div>
+
+<script src="js/market.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/trading.js"></script>
+<script src="js/agent.js"></script>
+<script src="js/backtest.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
